@@ -8,11 +8,23 @@ defmodule DayzeeWeb.CoreComponents do
   with doc strings and declarative assigns. You may customize and style
   them in any way you want, based on your application growth and needs.
 
-  The default components use Tailwind CSS, a utility-first CSS framework.
-  See the [Tailwind CSS documentation](https://tailwindcss.com) to learn
-  how to customize them or feel free to swap in another framework altogether.
+  The foundation for styling is Tailwind CSS, a utility-first CSS framework,
+  augmented with Daisy UI, a Tailwind CSS plugin that provides UI components
+  and themes. Here are useful references:
 
-  Icons are provided by [heroicons](https://heroicons.com). See `icon/1` for usage.
+    * [Daisy UI](https://daisyui.com/docs/intro/) - a good place to get
+      started and see the available components.
+
+    * [Tailwind CSS](https://tailwindcss.com) - the foundational framework
+      we build on. You will use it for layout, sizing, flexbox, grid, and
+      spacing.
+
+    * [Heroicons](https://heroicons.com) - see `icon/1` for usage.
+
+    * [Phoenix.Component](https://hexdocs.pm/phoenix_live_view/Phoenix.Component.html) -
+      the component system used by Phoenix. Some components, such as `<.link>`
+      and `<.form>`, are defined there.
+
   """
   use Phoenix.Component
   use Gettext, backend: DayzeeWeb.Gettext
@@ -44,22 +56,22 @@ defmodule DayzeeWeb.CoreComponents do
       id={@id}
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
       role="alert"
-      class={[
-        "fixed top-2 right-2 mr-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1",
-        @kind == :info && "bg-sky-50 text-sky-800 shadow-md ring-sky-500 fill-sky-900",
-        @kind == :error && "bg-rose-50 text-rose-900 shadow-md ring-rose-500 fill-rose-900"
-      ]}
+      class="toast toast-top toast-end"
       {@rest}
     >
-      <div class="flex gap-2">
+      <div class={[
+        "alert",
+        @kind == :info && "alert-info",
+        @kind == :error && "alert-error"
+      ]}>
         <.icon :if={@kind == :info} name="hero-information-circle-mini" class="h-5 w-5 shrink-0" />
         <.icon :if={@kind == :error} name="hero-exclamation-circle-mini" class="h-5 w-5 shrink-0" />
-        <div class="text-sm leading-5">
+        <div>
           <p :if={@title} class="font-semibold">{@title}</p>
           <p>{msg}</p>
         </div>
         <div class="flex-1" />
-        <button type="button" class="group flex self-start" aria-label={gettext("close")}>
+        <button type="button" class="group self-start" aria-label={gettext("close")}>
           <.icon name="hero-x-mark-solid" class="h-5 w-5 opacity-40 group-hover:opacity-70" />
         </button>
       </div>
@@ -82,6 +94,7 @@ defmodule DayzeeWeb.CoreComponents do
     <div id={@id} aria-live="polite">
       <.flash kind={:info} flash={@flash} />
       <.flash kind={:error} flash={@flash} />
+
       <.flash
         id="client-error"
         kind={:error}
@@ -110,44 +123,6 @@ defmodule DayzeeWeb.CoreComponents do
   end
 
   @doc """
-  Renders a simple form.
-
-  ## Examples
-
-      <.simple_form for={@form} phx-change="validate" phx-submit="save">
-        <.input field={@form[:email]} label="Email"/>
-        <.input field={@form[:username]} label="Username" />
-        <:actions>
-          <.button>Save</.button>
-        </:actions>
-      </.simple_form>
-  """
-  attr :for, :any, required: true, doc: "the data structure for the form"
-  attr :as, :any, doc: "the server side parameter to collect all input under"
-
-  attr :rest, :global,
-    include: ~w(autocomplete name rel action enctype method novalidate target multipart),
-    doc: "the arbitrary HTML attributes to apply to the form tag"
-
-  slot :inner_block, required: true
-  slot :actions, doc: "the slot for form actions, such as a submit button"
-
-  def simple_form(assigns) do
-    assigns = assign(assigns, :as, if(assigns[:as], do: %{as: assigns[:as]}, else: %{}))
-
-    ~H"""
-    <.form :let={f} for={@for} {@as} {@rest}>
-      <div class="mt-10 space-y-8 bg-white">
-        {render_slot(@inner_block, f)}
-        <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
-          {render_slot(action, f)}
-        </div>
-      </div>
-    </.form>
-    """
-  end
-
-  @doc """
   Renders a button.
 
   ## Examples
@@ -155,38 +130,23 @@ defmodule DayzeeWeb.CoreComponents do
       <.button>Send!</.button>
       <.button phx-click="go" class="ml-2">Send!</.button>
   """
-  attr :type, :string, default: nil
   attr :class, :string, default: nil
-  attr :rest, :global, include: ~w(disabled form name value)
-
+  attr :rest, :global
   slot :inner_block, required: true
 
   def button(assigns) do
     ~H"""
-    <button type={@type} class={[button_classes(), @class]} {@rest}>
+    <button class={["btn", @class]} {@rest}>
       {render_slot(@inner_block)}
     </button>
     """
   end
 
   @doc """
-  Returns the default button classes.
-
-  ## Examples
-
-      <.link class={button_classes()} href={~p"/items/new"}>
-        New Item
-      </.link>
-  """
-  def button_classes do
-    "inline-block phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 text-sm font-semibold leading-6 text-white active:text-white/80"
-  end
-
-  @doc """
   Renders an input with label and error messages.
 
   A `Phoenix.HTML.FormField` may be passed as argument,
-  which is used to retrieve the input name, id, and values.
+  which is used to retrieve the input name, values, and errors.
   Otherwise all attributes may be passed explicitly.
 
   ## Types
@@ -208,7 +168,6 @@ defmodule DayzeeWeb.CoreComponents do
       <.input field={@form[:email]} type="email" />
       <.input name="my-input" errors={["oh no!"]} />
   """
-  attr :id, :any, default: nil
   attr :name, :any
   attr :label, :string, default: nil
   attr :value, :any
@@ -235,8 +194,7 @@ defmodule DayzeeWeb.CoreComponents do
     errors = if Phoenix.Component.used_input?(field), do: field.errors, else: []
 
     assigns
-    |> assign(field: nil, id: assigns.id || field.id)
-    |> assign(:errors, Enum.map(errors, &translate_error(&1)))
+    |> assign(field: nil, errors: Enum.map(errors, &translate_error(&1)))
     |> assign_new(:name, fn -> if assigns.multiple, do: field.name <> "[]", else: field.name end)
     |> assign_new(:value, fn -> field.value end)
     |> input()
@@ -249,112 +207,80 @@ defmodule DayzeeWeb.CoreComponents do
       end)
 
     ~H"""
-    <div>
-      <label class="flex items-center gap-4 text-sm leading-6 text-zinc-600">
+    <fieldset class="fieldset mb-2">
+      <label>
         <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
         <input
           type="checkbox"
-          id={@id}
           name={@name}
           value="true"
           checked={@checked}
-          class="rounded border-zinc-300 text-zinc-900 focus:ring-0"
+          class="checkbox checkbox-sm"
           {@rest}
         />
-        {@label}
+        <span class="fieldset-label">{@label}</span>
       </label>
       <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
+    </fieldset>
     """
   end
 
   def input(%{type: "select"} = assigns) do
     ~H"""
-    <div>
-      <.label for={@id}>{@label}</.label>
-      <select
-        id={@id}
-        name={@name}
-        class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
-          @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400"
-        ]}
-        multiple={@multiple}
-        {@rest}
-      >
-        <option :if={@prompt} value="">{@prompt}</option>
-        {Phoenix.HTML.Form.options_for_select(@options, @value)}
-      </select>
+    <fieldset class="fieldset mb-2">
+      <label>
+        <span class="fieldset-label">{@label}</span>
+        <select
+          name={@name}
+          class={["select", @errors != [] && "select-error"]}
+          multiple={@multiple}
+          {@rest}
+        >
+          <option :if={@prompt} value="">{@prompt}</option>
+          {Phoenix.HTML.Form.options_for_select(@options, @value)}
+        </select>
+      </label>
       <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
+    </fieldset>
     """
   end
 
   def input(%{type: "textarea"} = assigns) do
     ~H"""
-    <div>
-      <.label for={@id}>{@label}</.label>
-      <textarea
-        id={@id}
-        name={@name}
-        class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 min-h-[6rem]",
-          @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400"
-        ]}
-        {@rest}
-      >{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
+    <fieldset class="fieldset mb-2">
+      <label>
+        <span class="fieldset-label">{@label}</span>
+        <textarea name={@name} class={["textarea", @errors != [] && "textarea-error"]} {@rest}>{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
+      </label>
       <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
+    </fieldset>
     """
   end
 
   # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
     ~H"""
-    <div>
-      <.label for={@id}>{@label}</.label>
-      <input
-        type={@type}
-        name={@name}
-        id={@id}
-        value={Phoenix.HTML.Form.normalize_value(@type, @value)}
-        class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
-          @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400"
-        ]}
-        {@rest}
-      />
+    <fieldset class="fieldset mb-2">
+      <label>
+        <span class="fieldset-label">{@label}</span>
+        <input
+          type={@type}
+          name={@name}
+          value={Phoenix.HTML.Form.normalize_value(@type, @value)}
+          class={["input", @errors != [] && "input-error"]}
+          {@rest}
+        />
+      </label>
       <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
+    </fieldset>
     """
   end
 
-  @doc """
-  Renders a label.
-  """
-  attr :for, :string, default: nil
-  slot :inner_block, required: true
-
-  def label(assigns) do
+  # Helper used by inputs to generate form errors
+  defp error(assigns) do
     ~H"""
-    <label for={@for} class="block text-sm font-semibold leading-6 text-zinc-800">
-      {render_slot(@inner_block)}
-    </label>
-    """
-  end
-
-  @doc """
-  Generates a generic error message.
-  """
-  slot :inner_block, required: true
-
-  def error(assigns) do
-    ~H"""
-    <p class="mt-1.5 flex gap-1.5 text-sm leading-6 text-rose-600">
-      <.icon name="hero-exclamation-circle-mini" class="mt-0.5 h-5 w-5 flex-none" />
+    <p class="mt-1.5 flex gap-2 items-center text-sm text-error">
+      <.icon name="hero-exclamation-circle-mini" class="h-5 w-5" />
       {render_slot(@inner_block)}
     </p>
     """
@@ -371,12 +297,12 @@ defmodule DayzeeWeb.CoreComponents do
 
   def header(assigns) do
     ~H"""
-    <header class={[@actions != [] && "flex items-center justify-between gap-6", @class]}>
+    <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-8", @class]}>
       <div>
-        <h1 class="text-lg font-semibold leading-8 text-zinc-800">
+        <h1 class="text-lg font-semibold leading-8">
           {render_slot(@inner_block)}
         </h1>
-        <p :if={@subtitle != []} class="mt-2 text-sm leading-6 text-zinc-600">
+        <p :if={@subtitle != []} class="text-sm text-base-content/70">
           {render_slot(@subtitle)}
         </p>
       </div>
@@ -417,47 +343,30 @@ defmodule DayzeeWeb.CoreComponents do
       end
 
     ~H"""
-    <div class="overflow-y-auto px-4 sm:overflow-visible sm:px-0">
-      <table class="w-[40rem] mt-11 sm:w-full">
-        <thead class="text-sm text-left leading-6 text-zinc-500">
-          <tr>
-            <th :for={col <- @col} class="p-0 pb-4 pr-6 font-normal">{col[:label]}</th>
-            <th :if={@action != []} class="relative p-0 pb-4">
-              <span class="sr-only">{gettext("Actions")}</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody
-          id={@id}
-          phx-update={match?(%Phoenix.LiveView.LiveStream{}, @rows) && "stream"}
-          class="relative divide-y divide-zinc-100 border-t border-zinc-200 text-sm leading-6 text-zinc-700"
-        >
-          <tr :for={row <- @rows} id={@row_id && @row_id.(row)} class="group hover:bg-zinc-50">
-            <td
-              :for={{col, i} <- Enum.with_index(@col)}
-              phx-click={@row_click && @row_click.(row)}
-              class={["relative p-0", @row_click && "hover:cursor-pointer", "rounded-table-corner"]}
-            >
-              <div class="block py-4 pr-6">
-                <span class={["relative", i == 0 && "font-semibold text-zinc-900"]}>
-                  {render_slot(col, @row_item.(row))}
-                </span>
-              </div>
-            </td>
-            <td :if={@action != []} class="relative w-14 p-0 rounded-table-corner">
-              <div class="relative whitespace-nowrap py-4 text-right text-sm font-medium">
-                <span
-                  :for={action <- @action}
-                  class="relative ml-4 font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
-                >
-                  {render_slot(action, @row_item.(row))}
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <table class="table table-zebra">
+      <thead>
+        <tr>
+          <th :for={col <- @col}>{col[:label]}</th>
+          <th :if={@action != []}>
+            <span class="sr-only">{gettext("Actions")}</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody id={@id} phx-update={is_struct(@rows, Phoenix.LiveView.LiveStream) && "stream"}>
+        <tr :for={row <- @rows} id={@row_id && @row_id.(row)}>
+          <td
+            :for={col <- @col}
+            phx-click={@row_click && @row_click.(row)}
+            class={@row_click && "hover:cursor-pointer"}
+          >
+            {render_slot(col, @row_item.(row))}
+          </td>
+          <td :for={action <- @action} class="p-0 font-semibold">
+            {render_slot(action, @row_item.(row))}
+          </td>
+        </tr>
+      </tbody>
+    </table>
     """
   end
 
@@ -477,14 +386,14 @@ defmodule DayzeeWeb.CoreComponents do
 
   def list(assigns) do
     ~H"""
-    <div class="mt-14">
-      <dl class="-my-4 divide-y divide-zinc-100">
-        <div :for={item <- @item} class="flex gap-4 py-4 text-sm leading-6 sm:gap-8">
-          <dt class="w-1/4 flex-none text-zinc-500">{item.title}</dt>
-          <dd class="text-zinc-700">{render_slot(item)}</dd>
+    <ul class="list">
+      <li :for={item <- @item} class="list-row">
+        <div>
+          <div class="font-bold">{item.title}</div>
+          <div>{render_slot(item)}</div>
         </div>
-      </dl>
-    </div>
+      </li>
+    </ul>
     """
   end
 
@@ -500,11 +409,8 @@ defmodule DayzeeWeb.CoreComponents do
 
   def back(assigns) do
     ~H"""
-    <div class="mt-16">
-      <.link
-        navigate={@navigate}
-        class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
-      >
+    <div class="pt-8">
+      <.link navigate={@navigate} class="text-sm inline-flex gap-2 items-center">
         <.icon name="hero-arrow-left-solid" class="h-3 w-3" />
         {render_slot(@inner_block)}
       </.link>
