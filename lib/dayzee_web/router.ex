@@ -18,6 +18,10 @@ defmodule DayzeeWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/posts", PostLive.Index, :index
+    live "/posts/new", PostLive.Form, :new
+    live "/posts/:id", PostLive.Show, :show
+    live "/posts/:id/edit", PostLive.Form, :edit
   end
 
   # Other scopes may use custom stacks.
