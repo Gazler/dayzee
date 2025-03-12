@@ -12,14 +12,12 @@ defmodule DayzeeWeb.PostLive.Form do
       <:subtitle>Use this form to manage post records in your database.</:subtitle>
     </.header>
 
-    <.simple_form for={@form} id="post-form" phx-change="validate" phx-submit="save">
+    <.form for={@form} id="post-form" phx-change="validate" phx-submit="save">
       <.input field={@form[:name]} type="text" label="Name" />
       <.input field={@form[:body]} type="textarea" label="Body" />
       <.input field={@form[:counter]} type="number" label="Counter" />
-      <:actions>
-        <.button phx-disable-with="Saving...">Save Post</.button>
-      </:actions>
-    </.simple_form>
+      <.submit phx-disable-with="Saving...">Save Post</.submit>
+    </.form>
 
     <.back navigate={return_path(@return_to, @post)}>Back</.back>
     """

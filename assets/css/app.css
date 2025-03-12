@@ -1,22 +1,18 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../js";
+@source "../../lib/dayzee_web";
 
-@plugin "@tailwindcss/forms";
+@plugin "../vendor/daisyui" {
+  themes: light --default, dark --prefersdark, cyberpunk;
+}
+
 @plugin "../icons.js";
-
-
 @variant phx-click-loading ([".phx-click-loading&", ".phx-click-loading &"]);
 @variant phx-submit-loading ([".phx-submit-loading&", ".phx-submit-loading &"]);
 @variant phx-change-loading ([".phx-change-loading&", ".phx-change-loading &"]);
 
-@custom-variant dark (&:where(.dark, .dark *));
-
-@theme {
-  --color-brand: #FD4F00
-}
-
-
-@layer base {
-  body {
-    @apply h-screen;
-  }
-}
+/*
+ * Make LiveView wrapper divs transparent for layout.
+ * This makes it possible to use LiveViews as flex children for example.
+ */
+[data-phx-root-id] { display: contents }

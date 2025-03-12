@@ -10,7 +10,7 @@ defmodule DayzeeWeb.PostLive.Show do
       Post {@post.id}
       <:subtitle>This is a post record from your database.</:subtitle>
       <:actions>
-        <.link class={button_classes()} navigate={~p"/posts/#{@post}/edit?return_to=show"}>
+        <.link class="btn" navigate={~p"/posts/#{@post}/edit?return_to=show"}>
           Edit post
         </.link>
       </:actions>

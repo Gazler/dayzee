@@ -9,7 +9,7 @@ defmodule DayzeeWeb.PostLive.Index do
     <.header>
       Listing Posts
       <:actions>
-        <.link class={button_classes()} navigate={~p"/posts/new"}>
+        <.link class="btn" navigate={~p"/posts/new"}>
           New Post
         </.link>
       </:actions>
