@@ -1,22 +1,22 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
 
-/*
- * Make LiveView wrapper divs transparent for layout.
- * This makes it possible to use LiveViews as flex children for example.
- */
-[data-phx-root-id] { display: contents }
+@plugin "@tailwindcss/forms";
+@plugin "../icons.js";
 
-/* Helper class for the default table component style that adds
- * rounded corners to the table rows.
- */
-@layer components {
-  .rounded-table-corner {
-    @apply
-      first:before:absolute first:before:h-full first:before:w-4 first:before:top-0 first:before:-left-4 first:before:group-hover:bg-zinc-50 first:before:sm:rounded-l-xl
-      last:before:absolute last:before:h-full last:before:w-4 last:before:top-0 last:before:-right-4 last:before:group-hover:bg-zinc-50 last:before:sm:rounded-r-xl;
-  }
+
+@variant phx-click-loading ([".phx-click-loading&", ".phx-click-loading &"]);
+@variant phx-submit-loading ([".phx-submit-loading&", ".phx-submit-loading &"]);
+@variant phx-change-loading ([".phx-change-loading&", ".phx-change-loading &"]);
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand: #FD4F00
 }
 
-/* This file is for your main application CSS */
+
+@layer base {
+  body {
+    @apply h-screen;
+  }
+}
