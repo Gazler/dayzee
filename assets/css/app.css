@@ -4,7 +4,9 @@
 @source "../../lib/dayzee_web";
 
 @plugin "../vendor/daisyui" {
-  themes: light --default, dark --prefersdark;
+  /* In practice, you will likely ship only with two themes, as below: */
+  /* themes: light --default, dark --prefersdark; */
+  themes: all;
 }
 
 @plugin "../icons.js";
