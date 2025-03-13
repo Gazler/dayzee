@@ -205,7 +205,7 @@ defmodule DayzeeWeb.CoreComponents do
   def errors(assigns) do
     ~H"""
     <div class="mt-1 space-y-2 text-sm text-error">
-      <p :for={error <- @list ++ @list} class="flex gap-1 items-center">
+      <p :for={error <- @list} class="flex gap-1 items-center">
         <.icon name="hero-exclamation-circle-mini" class="h-5 w-5" />
         {translate_error(error)}
       </p>
@@ -239,18 +239,19 @@ defmodule DayzeeWeb.CoreComponents do
       <.input field={@form[:email]} type="email" />
       <.input name="my-input" errors={["oh no!"]} />
   """
-  attr :name, :any
-  attr :value, :any
-
   attr :type, :string,
     default: "text",
     values: ~w(checkbox color date datetime-local email file month number password
                range search select tel text textarea time url week)
 
+  attr :name, :any
+  attr :value, :any
+  attr :errors, :list
+
   attr :field, Phoenix.HTML.FormField,
+    default: nil,
     doc: "a form field struct retrieved from the form, for example: @form[:email]"
 
-  attr :errors, :list, default: []
   attr :checked, :boolean, doc: "the checked flag for checkbox inputs"
   attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
@@ -260,18 +261,12 @@ defmodule DayzeeWeb.CoreComponents do
     include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
                 pattern placeholder readonly required rows size step)
 
-  def input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
-    assigns
-    |> assign(field: nil, errors: field.errors)
-    |> assign_new(:name, fn -> if assigns.multiple, do: field.name <> "[]", else: field.name end)
-    |> assign_new(:value, fn -> field.value end)
-    |> input()
-  end
-
   def input(%{type: "checkbox"} = assigns) do
     assigns =
-      assign_new(assigns, :checked, fn ->
-        Phoenix.HTML.Form.normalize_value("checkbox", assigns[:value])
+      assigns
+      |> input_defaults()
+      |> assign_new(:checked, fn ->
+        Phoenix.HTML.Form.normalize_value("checkbox", assigns.value)
       end)
 
     ~H"""
@@ -288,9 +283,11 @@ defmodule DayzeeWeb.CoreComponents do
   end
 
   def input(%{type: "select"} = assigns) do
+    assigns = input_defaults(assigns)
+
     ~H"""
     <select
-      name={@name}
+      name={@name && "#{@name}#{if @multiple, do: "[]", else: ""}"}
       class={["select", @errors != [] && "select-error"]}
       multiple={@multiple}
       {@rest}
@@ -302,6 +299,8 @@ defmodule DayzeeWeb.CoreComponents do
   end
 
   def input(%{type: "textarea"} = assigns) do
+    assigns = input_defaults(assigns)
+
     ~H"""
     <textarea name={@name} class={["textarea", @errors != [] && "textarea-error"]} {@rest}>{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
     """
@@ -309,6 +308,8 @@ defmodule DayzeeWeb.CoreComponents do
 
   # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
+    assigns = input_defaults(assigns)
+
     ~H"""
     <input
       type={@type}
@@ -318,6 +319,13 @@ defmodule DayzeeWeb.CoreComponents do
       {@rest}
     />
     """
+  end
+
+  defp input_defaults(%{field: field} = assigns) do
+    assigns
+    |> assign_new(:name, fn -> field[:name] end)
+    |> assign_new(:value, fn -> field[:value] end)
+    |> assign_new(:errors, fn -> field[:errors] || [] end)
   end
 
   @doc """
