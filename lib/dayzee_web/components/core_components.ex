@@ -214,10 +214,10 @@ defmodule DayzeeWeb.CoreComponents do
   end
 
   @doc """
-  Renders an input with label and error messages.
+  Renders an input with appropriate error handling.
 
   A `Phoenix.HTML.FormField` may be passed as argument,
-  which is used to retrieve the input name, id, and values.
+  which is used to retrieve the input name, values, and errors.
   Otherwise all attributes may be passed explicitly.
 
   ## Types
