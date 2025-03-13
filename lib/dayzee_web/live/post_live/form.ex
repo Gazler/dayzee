@@ -13,10 +13,31 @@ defmodule DayzeeWeb.PostLive.Form do
     </.header>
 
     <.form for={@form} id="post-form" phx-change="validate" phx-submit="save">
-      <.input field={@form[:name]} type="text" label="Name" />
-      <.input field={@form[:body]} type="textarea" label="Body" />
-      <.input field={@form[:counter]} type="number" label="Counter" />
-      <.submit phx-disable-with="Saving...">Save Post</.submit>
+      <.fieldset :let={name} for={@form[:name]}>
+        <label>
+          <.legend>Name</.legend>
+          <.input field={name} type="text" />
+        </label>
+        <.errors list={name.errors} />
+      </.fieldset>
+
+      <.fieldset :let={body} for={@form[:body]}>
+        <label>
+          <.legend>Body</.legend>
+          <.input field={body} type="textarea" />
+        </label>
+        <.errors list={body.errors} />
+      </.fieldset>
+
+      <.fieldset :let={counter} for={@form[:counter]}>
+        <label>
+          <.legend>Counter</.legend>
+          <.input field={counter} type="number" />
+        </label>
+        <.errors list={counter.errors} />
+      </.fieldset>
+
+      <.button type="submit" phx-disable-with="Saving...">Save Post</.button>
     </.form>
 
     <.back navigate={return_path(@return_to, @post)}>Back</.back>
