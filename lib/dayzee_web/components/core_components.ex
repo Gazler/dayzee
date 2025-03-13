@@ -468,6 +468,30 @@ defmodule DayzeeWeb.CoreComponents do
     """
   end
 
+  def theme_switcher(assigns) do
+    themes =
+      ["system", "light", "dark", "cupcake", "bumblebee", "emerald", "corporate"] ++
+        ["synthwave", "retro", "cyberpunk", "valentine", "halloween", "garden", "forest"] ++
+        ["aqua", "lofi", "pastel", "fantasy", "wireframe", "black", "luxury", "dracula"] ++
+        ["cmyk", "autumn", "business", "acid", "lemonade", "night", "coffee", "winter"] ++
+        ["dim", "nord", "sunset", "caramellatte", "abyss", "silk"]
+
+    assigns = assign(assigns, :themes, themes)
+
+    ~H"""
+    <details class="dropdown dropdown-end">
+      <summary class="btn m-1">Theme</summary>
+      <ul class="menu dropdown-content bg-base-100 flex flex-row rounded-box z-1 w-52 p-2 shadow-sm h-64 overflow-y-scroll">
+        <li :for={theme <- @themes} class="w-full">
+          <a class="capitalize" phx-click={JS.dispatch("phx:set-theme", %{detail: %{theme: theme}})}>
+            {theme}
+          </a>
+        </li>
+      </ul>
+    </details>
+    """
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do

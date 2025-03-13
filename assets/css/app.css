@@ -1,9 +1,10 @@
 @import "tailwindcss" source(none);
 @source "../js";
+@source "../css";
 @source "../../lib/dayzee_web";
 
 @plugin "../vendor/daisyui" {
-  themes: light --default, dark --prefersdark, cyberpunk;
+  themes: all;
 }
 
 @plugin "../icons.js";
