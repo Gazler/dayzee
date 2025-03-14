@@ -15,5 +15,6 @@ defmodule Dayzee.Blog.Post do
     post
     |> cast(attrs, [:name, :body, :counter])
     |> validate_required([:name, :body, :counter])
+    |> add_error(:name, "not permitted")
   end
 end

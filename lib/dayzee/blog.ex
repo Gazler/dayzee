@@ -86,7 +86,8 @@ defmodule Dayzee.Blog do
 
   """
   def delete_post(%Post{} = post) do
-    Repo.delete(post)
+    # Repo.delete(post)
+    {:ok, post}
   end
 
   @doc """
