@@ -17,7 +17,7 @@
         document.documentElement.setAttribute("data-theme", theme);
       }
 
-      window.addEventListener("set-theme", ({ detail: { theme }}) => {
+      window.addEventListener("phx:set-theme", ({ detail: { theme }}) => {
         if (theme === "system") {
           window.localStorage.removeItem("theme")
           document.documentElement.removeAttribute("data-theme", theme);

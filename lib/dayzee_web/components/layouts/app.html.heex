@@ -25,7 +25,7 @@
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu bg-base-100 flex flex-row rounded-box z-1 w-52 mt-2 shadow-sm h-64 overflow-y-scroll"
+            class="dropdown-content menu bg-base-100 flex flex-row rounded-field z-1 w-52 mt-2 shadow-sm h-64 overflow-y-scroll"
           >
             <li
               :for={
@@ -36,7 +36,10 @@
               }
               class="w-full"
             >
-              <a class="capitalize" phx-click={JS.dispatch("set-theme", detail: %{theme: theme})}>
+              <a
+                class="capitalize"
+                phx-click={JS.dispatch("phx:set-theme", detail: %{theme: theme})}
+              >
                 {theme}
               </a>
             </li>
