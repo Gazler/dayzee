@@ -143,7 +143,78 @@ defmodule DayzeeWeb.CoreComponents do
   end
 
   @doc """
-  Renders an input with label and error messages.
+  Renders a form fieldset.
+
+  ## Examples
+
+      <.fieldset :let={name} for={@form[:name]}>
+        <label>
+          <.legend>Name</.legend>
+          <.input field={name} type="text" />
+        </label>
+        <.errors list={name.errors} />
+      </.fieldset>
+
+  """
+  attr :for, :any,
+    default: [],
+    doc: "a form field struct (or a list of) which are preprocessed, for example: @form[:email]"
+
+  slot :inner_block, required: true
+
+  def fieldset(assigns) do
+    assigns = update(assigns, :for, &reset_errors_if_unused/1)
+
+    ~H"""
+    <fieldset class="fieldset mb-2">
+      {render_slot(@inner_block, @for)}
+    </fieldset>
+    """
+  end
+
+  defp reset_errors_if_unused(%Phoenix.HTML.FormField{} = field) do
+    if Phoenix.Component.used_input?(field) do
+      field
+    else
+      %{field | errors: []}
+    end
+  end
+
+  defp reset_errors_if_unused(field) when is_list(field) do
+    Enum.map(field, &reset_errors_if_unused/1)
+  end
+
+  @doc """
+  Renders a fieldset legend.
+  """
+  attr :class, :string, default: nil
+  attr :rest, :global
+  slot :inner_block, required: true
+
+  def legend(assigns) do
+    ~H"""
+    <span class={["fieldset-legend", @class]} {@rest}>{render_slot(@inner_block)}</span>
+    """
+  end
+
+  @doc """
+  Renders the given errors with internationalization.
+  """
+  attr :list, :list, required: true
+
+  def errors(assigns) do
+    ~H"""
+    <div class="mt-1 space-y-2 text-sm text-error">
+      <p :for={error <- @list} class="flex gap-1 items-center">
+        <.icon name="hero-exclamation-circle-mini" class="h-5 w-5" />
+        {translate_error(error)}
+      </p>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders an input with appropriate error handling.
 
   A `Phoenix.HTML.FormField` may be passed as argument,
   which is used to retrieve the input name, values, and errors.
@@ -168,19 +239,19 @@ defmodule DayzeeWeb.CoreComponents do
       <.input field={@form[:email]} type="email" />
       <.input name="my-input" errors={["oh no!"]} />
   """
-  attr :name, :any
-  attr :label, :string, default: nil
-  attr :value, :any
-
   attr :type, :string,
     default: "text",
     values: ~w(checkbox color date datetime-local email file month number password
                range search select tel text textarea time url week)
 
+  attr :name, :any
+  attr :value, :any
+  attr :errors, :list
+
   attr :field, Phoenix.HTML.FormField,
+    default: nil,
     doc: "a form field struct retrieved from the form, for example: @form[:email]"
 
-  attr :errors, :list, default: []
   attr :checked, :boolean, doc: "the checked flag for checkbox inputs"
   attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
@@ -188,102 +259,73 @@ defmodule DayzeeWeb.CoreComponents do
 
   attr :rest, :global,
     include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
-                multiple pattern placeholder readonly required rows size step)
-
-  def input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
-    errors = if Phoenix.Component.used_input?(field), do: field.errors, else: []
-
-    assigns
-    |> assign(field: nil, errors: Enum.map(errors, &translate_error(&1)))
-    |> assign_new(:name, fn -> if assigns.multiple, do: field.name <> "[]", else: field.name end)
-    |> assign_new(:value, fn -> field.value end)
-    |> input()
-  end
+                pattern placeholder readonly required rows size step)
 
   def input(%{type: "checkbox"} = assigns) do
     assigns =
-      assign_new(assigns, :checked, fn ->
-        Phoenix.HTML.Form.normalize_value("checkbox", assigns[:value])
+      assigns
+      |> input_defaults()
+      |> assign_new(:checked, fn ->
+        Phoenix.HTML.Form.normalize_value("checkbox", assigns.value)
       end)
 
     ~H"""
-    <fieldset class="fieldset mb-2">
-      <label>
-        <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
-        <input
-          type="checkbox"
-          name={@name}
-          value="true"
-          checked={@checked}
-          class="checkbox checkbox-sm"
-          {@rest}
-        />
-        <span class="fieldset-label">{@label}</span>
-      </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </fieldset>
+    <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
+    <input
+      type="checkbox"
+      name={@name}
+      value="true"
+      checked={@checked}
+      class="checkbox checkbox-sm"
+      {@rest}
+    />
     """
   end
 
   def input(%{type: "select"} = assigns) do
+    assigns = input_defaults(assigns)
+
     ~H"""
-    <fieldset class="fieldset mb-2">
-      <label>
-        <span class="fieldset-label">{@label}</span>
-        <select
-          name={@name}
-          class={["select", @errors != [] && "select-error"]}
-          multiple={@multiple}
-          {@rest}
-        >
-          <option :if={@prompt} value="">{@prompt}</option>
-          {Phoenix.HTML.Form.options_for_select(@options, @value)}
-        </select>
-      </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </fieldset>
+    <select
+      name={@name && "#{@name}#{if @multiple, do: "[]", else: ""}"}
+      class={["select", @errors != [] && "select-error"]}
+      multiple={@multiple}
+      {@rest}
+    >
+      <option :if={@prompt} value="">{@prompt}</option>
+      {Phoenix.HTML.Form.options_for_select(@options, @value)}
+    </select>
     """
   end
 
   def input(%{type: "textarea"} = assigns) do
+    assigns = input_defaults(assigns)
+
     ~H"""
-    <fieldset class="fieldset mb-2">
-      <label>
-        <span class="fieldset-label">{@label}</span>
-        <textarea name={@name} class={["textarea", @errors != [] && "textarea-error"]} {@rest}>{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
-      </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </fieldset>
+    <textarea name={@name} class={["textarea", @errors != [] && "textarea-error"]} {@rest}>{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
     """
   end
 
   # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
+    assigns = input_defaults(assigns)
+
     ~H"""
-    <fieldset class="fieldset mb-2">
-      <label>
-        <span class="fieldset-label">{@label}</span>
-        <input
-          type={@type}
-          name={@name}
-          value={Phoenix.HTML.Form.normalize_value(@type, @value)}
-          class={["input", @errors != [] && "input-error"]}
-          {@rest}
-        />
-      </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </fieldset>
+    <input
+      type={@type}
+      name={@name}
+      value={Phoenix.HTML.Form.normalize_value(@type, @value)}
+      class={["input", @errors != [] && "input-error"]}
+      {@rest}
+    />
     """
   end
 
-  # Helper used by inputs to generate form errors
-  defp error(assigns) do
-    ~H"""
-    <p class="mt-1.5 flex gap-2 items-center text-sm text-error">
-      <.icon name="hero-exclamation-circle-mini" class="h-5 w-5" />
-      {render_slot(@inner_block)}
-    </p>
-    """
+  defp input_defaults(%{field: field} = assigns) do
+    assigns
+    |> assign_new(:name, fn -> field[:name] end)
+    |> assign_new(:value, fn -> field[:value] end)
+    |> assign_new(:errors, fn -> field[:errors] || [] end)
   end
 
   @doc """
